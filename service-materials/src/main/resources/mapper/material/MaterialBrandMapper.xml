@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.gh.service.material.dao.MaterialBrandDao">
+
+	<resultMap id="BaseResultMap" type="com.gh.pojo.entity.material.MaterialBrand">
+		<id property="id" column="id" jdbcType="BIGINT"/>
+		<result property="brandState" column="brand_state" jdbcType="INTEGER"/>
+		<result property="recordType" column="record_type"/>
+		<result property="brandName" column="brand_name" jdbcType="VARCHAR"/>
+		<result property="sort" column="sort" jdbcType="INTEGER"/>
+		<result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+		<result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+		<result property="optUserId" column="opt_user_id" jdbcType="BIGINT"/>
+		<result property="optUserName" column="opt_user_name" jdbcType="VARCHAR"/>
+	</resultMap>
+
+	<!--定义多条件-->
+	<sql id="where_clause">
+		<where>
+			1=1
+			<if test="id != null and id != ''"> and t.id = #{id} </if>
+			<if test="brandState != null "> and t.brand_state = #{brandState} </if>
+			<if test="brandState == null "> and t.brand_state != -1 </if>
+			<if test="recordType == null"> and t.record_type =1 </if>
+			<if test="recordType != null and recordType != 0"> and t.record_type = #{recordType} </if>
+			<if test="brandName != null and brandName != ''"> and INSTR(t.brand_name, #{brandName}) >0 </if>
+			<if test="sort != null"> and t.sort = #{sort} </if>
+			<if test="createTime != null and createTime != ''"> and t.create_time = #{createTime} </if>
+			<if test="updateTime != null and updateTime != ''"> and t.update_time = #{updateTime} </if>
+			<if test="optUserId != null"> and t.opt_user_id = #{optUserId} </if>
+			<if test="optUserName != null and optUserName != ''"> and t.opt_user_name = #{optUserName} </if>
+		</where>
+	</sql>
+
+	<!--定义数据库中的列-->
+	<sql id="part_Column_List" >
+		brand_state, record_type, brand_name, sort, create_time, update_time, opt_user_id, opt_user_name
+	</sql>
+
+	<!--查询(全查  条件查询   模糊查询  )-->
+	<select id="queryBrandList" resultMap="BaseResultMap">
+		select * from sys_material_brand t <include refid="where_clause" />
+		ORDER BY t.sort asc ,t.update_time desc
+	</select>
+
+	<!--各种统计-->
+	<select id="getCountByObj" resultType="int">
+		select count(*)
+		from sys_material_brand t
+		<include refid="where_clause" />
+	</select>
+
+	<!--添加数据-->
+	<insert id="save" parameterType="com.gh.pojo.entity.material.MaterialBrand" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO sys_material_brand(<include refid="part_Column_List" />)
+		VALUES(#{brandState, jdbcType=INTEGER}, #{recordType, jdbcType=INTEGER}, #{brandName, jdbcType=VARCHAR},
+		#{sort, jdbcType=INTEGER}, #{createTime, jdbcType=TIMESTAMP},
+		#{updateTime, jdbcType=TIMESTAMP}, #{optUserId, jdbcType=BIGINT}, #{optUserName, jdbcType=VARCHAR})
+	</insert>
+
+
+	<!--更新方法-->
+	<update id="update" parameterType="com.gh.pojo.entity.material.MaterialBrand" >
+		UPDATE sys_material_brand
+		<set >
+			<if test="brandState != null" >
+				brand_state = #{brandState, jdbcType=INTEGER},
+			</if>
+			<if test="recordType != null" >
+				record_type = #{recordType, jdbcType=INTEGER},
+			</if>
+
+			<if test="brandName != null and brandName != ''" >
+				brand_name = #{brandName, jdbcType=VARCHAR},
+			</if>
+			<if test="sort != null" >
+				sort = #{sort, jdbcType=INTEGER},
+			</if>
+			<if test="updateTime != null" >
+				update_time = #{updateTime, jdbcType=TIMESTAMP},
+			</if>
+			<if test="optUserId != null" >
+				opt_user_id = #{optUserId, jdbcType=BIGINT},
+			</if>
+			<if test="optUserName != null" >
+				opt_user_name = #{optUserName, jdbcType=VARCHAR},
+			</if>
+		</set>
+		WHERE id = #{id, jdbcType=BIGINT}
+	</update>
+
+
+	<!--=========================================以下是暂时未使用的=================================================-->
+
+
+	
+	<sql id="Base_Column_List" >
+    	id, brand_state, record_type, brand_name, sort, create_time, update_time, opt_user_id, opt_user_name
+  	</sql>
+
+
+
+
+
+
+	<!--使用中============================================================-->
+	<!--根据ID值查询相应的品牌-->
+	<select id="get" resultMap="BaseResultMap">
+		SELECT * FROM sys_material_brand WHERE id = #{value}
+	</select>
+	<!--使用中============================================================-->
+
+
+	<!--分页查询-->
+
+	<select id="queryList" resultMap="BaseResultMap" parameterType="map">
+		SELECT * FROM sys_material_brand mb
+		<where>
+			<include refid="selectWhereClause" />
+		</where>
+		<choose>
+			<when test="sidx != null and sidx.trim() != ''">
+				ORDER BY ${sidx} ${order}
+			</when>
+			<otherwise>
+				ORDER BY sort, id ASC, create_time ASC
+			</otherwise>
+		</choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+
+	<select id="queryTotal" resultType="int">
+		SELECT COUNT(*) FROM sys_material_brand mb
+		<where>
+			<include refid="selectWhereClause" />
+		</where>
+	</select>
+
+
+
+
+
+
+
+
+	<!--查询全部-->
+	<select id="findAll" resultMap="BaseResultMap">
+		SELECT * FROM sys_material_brand WHERE brand_state != 2 ORDER BY sort ASC, create_time ASC
+	</select>
+
+
+
+
+	<select id="findByMaterialBrandName" resultMap="BaseResultMap">
+		SELECT * FROM sys_material_brand WHERE brand_name = #{brandName}
+	</select>
+
+	<!-- 分页查询条件 -->
+	<sql id="selectWhereClause">
+		<if test="id != null">
+			AND mb.id = #{id}
+		</if>
+		<if test="brandState != null">
+			AND mb.brand_state = #{brandState, jdbcType=INTEGER}
+		</if>
+		<if test="brandState == null ">
+			and mb.brand_state != -1
+		</if>
+		<if test="cityName != null and materialNickName != ''">
+			AND mb.brand_name = #{brandName, jdbcType=VARCHAR}
+		</if>
+	</sql>
+
+
+
+
+
+
+
+
+
+
+
+
+	<select id="countBrandState" resultType="map">
+	select count(brand_state = 0 or null) as key1, COUNT(brand_state = 1 or null) as key2  
+	from sys_material_brand t  <include refid="where_clause" />
+	</select>
+</mapper>

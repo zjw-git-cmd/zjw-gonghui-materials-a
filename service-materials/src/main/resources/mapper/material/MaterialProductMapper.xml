@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.gh.service.material.dao.MaterialProductDao">
+
+	<resultMap id="BaseResultMap" type="com.gh.pojo.entity.material.MaterialProduct">
+		<id property="id" column="id" jdbcType="BIGINT"/>
+		<result property="materialState" column="material_state" jdbcType="INTEGER"/>
+		<result property="recordType" column="record_type" jdbcType="INTEGER"/>
+		<result property="productType" column="product_type" jdbcType="INTEGER"/>
+		<result property="materialType" column="material_type" jdbcType="INTEGER"/>
+		<result property="brandId" column="brand_id" jdbcType="BIGINT"/>
+		<result property="brandName" column="brand_name" jdbcType="VARCHAR"/>
+		<result property="specId" column="spec_id" jdbcType="BIGINT"/>
+		<result property="specName" column="spec_name" jdbcType="VARCHAR"/>
+		<result property="materialName" column="material_name" jdbcType="VARCHAR"/>
+		<result property="materialNickName" column="material_nick_name" jdbcType="VARCHAR"/>
+		<result property="materialNickId" column="material_nick_id" jdbcType="BIGINT"/>
+		<result property="unitId" column="unit_id" jdbcType="BIGINT"/>
+		<result property="unitName" column="unit_name" jdbcType="VARCHAR"/>
+		<result property="supplierId" column="supplier_id" jdbcType="BIGINT"/>
+		<result property="supplierName" column="supplier_name" jdbcType="VARCHAR"/>
+		<result property="materialColor" column="material_color"/>
+		<result property="materialColorId" column="material_color_id" jdbcType="BIGINT"/>
+        <result property="materialLength" column="material_length"/>
+        <result property="materialWeight" column="material_weight"/>
+        <result property="materialWidth" column="material_width"/>
+        <result property="materialHeight" column="material_height"/>
+		<result property="materialPartsPackageInfo" column="material_parts_package_info" jdbcType="VARCHAR"/>
+		<result property="packingUnit" column="packing_unit" jdbcType="VARCHAR"/>
+		<result property="packagingSpec" column="packaging_spec" jdbcType="DECIMAL"/>
+		<result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+		<result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+		<result property="optUserId" column="opt_user_id" jdbcType="BIGINT"/>
+		<result property="optUserName" column="opt_user_name" jdbcType="VARCHAR"/>
+		<result property="supplierAreaStr" column="supplierAreaStr" jdbcType="VARCHAR"/>
+		<result property="supplierState" column="supplier_state" jdbcType="INTEGER"/>
+	</resultMap>
+
+
+	<!-- 多条件查询条件 -->
+	<sql id="selectWhereClause">
+		mp.material_state != 2
+		<if test="materialState != null">
+			AND mp.material_state = #{materialState, jdbcType=INTEGER}
+		</if>
+		<if test="materialType != null">
+			AND mp.material_type = #{materialType, jdbcType=INTEGER}
+		</if>
+		<if test="brandId != null">
+			AND mp.brand_id = #{brandId, jdbcType=BIGINT}
+		</if>
+		<if test="brandName != null and brandName != ''">
+			AND mp.brand_name = #{brandName, jdbcType=VARCHAR}
+		</if>
+		<if test="specId != null">
+			AND mp.spec_id = #{specId, jdbcType=BIGINT}
+		</if>
+		<if test="specName != null and specName != ''">
+			AND mp.spec_name = #{specName, jdbcType=VARCHAR}
+		</if>
+		<if test="materialName != null and materialName != ''">
+			AND INSTR( mp.material_name, #{materialName, jdbcType=VARCHAR}) >0
+		</if>
+		<if test="materialNickName != null and materialNickName != ''">
+			AND INSTR( mp.material_nick_name, #{materialNickName, jdbcType=VARCHAR}) >0
+		</if>
+		<if test="unitId != null">
+			AND mp.unit_id = #{unitId, jdbcType=BIGINT}
+		</if>
+		<if test="unitName != null and unitName != ''">
+			AND mp.unit_name = #{unitName, jdbcType=VARCHAR}
+		</if>
+		<if test="supplierId != null">
+			AND mp.supplier_id = #{supplierId, jdbcType=BIGINT}
+		</if>
+		<if test="supplierName != null and supplierName != ''">
+			AND mp.supplier_name = #{supplierName, jdbcType=VARCHAR}
+		</if>
+		<if test="cityCode != null and cityCode != ''">
+			AND mg.material_id = mp.id
+			<if test="cityCode != null and cityCode != ''">
+				AND mg.city_code = #{cityCode, jdbcType=VARCHAR}
+			</if>
+		</if>
+	</sql>
+
+
+
+	<!--辅材表更新   根据map不同的数据-->
+	<update id="updateMaterialByParam" parameterType="map">
+		UPDATE sys_material_product
+		<set >
+			<if test="brandName != null and brandName != ''" >
+				brand_name = #{brandName, jdbcType=VARCHAR},
+			</if>
+			<if test="specName != null and specName != ''" >
+				spec_name = #{specName, jdbcType=VARCHAR},
+			</if>
+			<if test="unitName != null and unitName != ''" >
+				unit_name = #{unitName, jdbcType=VARCHAR},
+			</if>
+			<if test="supplierName != null and supplierName != ''" >
+				supplier_name = #{supplierName, jdbcType=VARCHAR},
+			</if>
+		</set>
+		WHERE
+		<if test="brandId != null" >
+			brand_id = #{brandId, jdbcType=BIGINT}
+		</if>
+		<if test="specId != null" >
+			spec_id = #{specId, jdbcType=BIGINT}
+		</if>
+		<if test="unitId != null" >
+			unit_id = #{unitId, jdbcType=BIGINT}
+		</if>
+		<if test="supplierId != null" >
+			supplier_id = #{supplierId, jdbcType=BIGINT}
+		</if>
+	</update>
+
+
+	<!--多条件查询-->
+	<select id="queryList" resultMap="BaseResultMap" parameterType="map">
+		SELECT * FROM sys_material_product mp
+		<if test="cityCode != null and cityCode != ''">
+			, sys_material_goods mg
+		</if>
+		<where>
+			<include refid="selectWhereClause" />
+		</where>
+		<choose>
+			<when test="sidx != null and sidx.trim() != ''">
+				ORDER BY ${sidx} ${order}
+			</when>
+			<otherwise>
+				ORDER BY material_name ASC
+			</otherwise>
+		</choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+
+
+	<!--================以下暂未使用=================================================================-->
+	
+	<sql id="Base_Column_List" >
+    	  id, material_state, record_type, product_type, material_type, brand_id, brand_name, spec_id, spec_name, material_name,
+    	  material_nick_name, unit_id, unit_name, supplier_id, supplier_name, packing_unit, packaging_spec,
+    	  create_time, update_time, opt_user_id, opt_user_name, material_color, material_length, material_weight,
+    	  material_width, material_height, material_parts_package_info,material_nick_id,material_color_id
+  	</sql>
+
+
+	<sql id="As_Base_Column_List" >
+		mp.id, mp.material_state, mp.material_type, mp.brand_id, mp.brand_name, mp.spec_id, mp.spec_name, mp.material_name,
+		mp.material_nick_name, mp.unit_id, mp.unit_name, mp.supplier_id, mp.supplier_name, mp.packing_unit, mp.packaging_spec,
+		mp.create_time, mp.update_time, mp.opt_user_id, mp.opt_user_name, mp.material_color, mp.material_length, mp.material_weight,
+    	mp.material_width, mp.material_height, mp.material_parts_package_info
+	</sql>
+
+
+	<select id="get" resultMap="BaseResultMap">
+		SELECT * FROM sys_material_product WHERE id = #{value}
+	</select>
+	
+	<insert id="save" parameterType="com.gh.pojo.entity.material.MaterialProduct" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO sys_material_product(<include refid="Base_Column_List" />)
+		VALUES(#{id, jdbcType=BIGINT}, #{materialState, jdbcType=INTEGER}, #{recordType, jdbcType=INTEGER}, #{productType, jdbcType=INTEGER}, #{materialType, jdbcType=INTEGER},
+		  #{brandId, jdbcType=BIGINT}, #{brandName, jdbcType=VARCHAR}, #{specId, jdbcType=BIGINT},
+		  #{specName, jdbcType=VARCHAR}, #{materialName, jdbcType=VARCHAR},
+		  #{materialNickName, jdbcType=VARCHAR}, #{unitId, jdbcType=BIGINT}, #{unitName, jdbcType=VARCHAR},
+		  #{supplierId, jdbcType=BIGINT}, #{supplierName, jdbcType=VARCHAR},
+		  #{packingUnit, jdbcType=VARCHAR}, #{packagingSpec, jdbcType=DECIMAL},
+		  #{createTime, jdbcType=TIMESTAMP}, #{updateTime, jdbcType=TIMESTAMP},
+		  #{optUserId, jdbcType=BIGINT}, #{optUserName, jdbcType=VARCHAR},
+		  #{materialColor, jdbcType=VARCHAR}, #{materialLength, jdbcType=VARCHAR},
+		  #{materialWeight, jdbcType=VARCHAR}, #{materialWidth, jdbcType=VARCHAR},
+		  #{materialHeight, jdbcType=VARCHAR}, #{materialPartsPackageInfo, jdbcType=VARCHAR},
+		  #{materialNickId, jdbcType=BIGINT},#{materialColorId, jdbcType=BIGINT})
+	</insert>
+
+
+
+	<!--===============使用中===================================================-->
+	<!--辅材更新-->
+	<update id="update" parameterType="com.gh.pojo.entity.material.MaterialProduct" >
+	    UPDATE sys_material_product
+	    <set >
+	      <if test="materialState != null" >
+	        material_state = #{materialState, jdbcType=INTEGER},
+	      </if>
+	      <if test="recordType != null">
+	        record_type =  #{recordType, jdbcType=INTEGER},
+	      </if>
+	      <if test="materialType != null" >
+	      	material_type = #{materialType, jdbcType=INTEGER},
+	      </if>
+	      <if test="brandId != null" >
+	        brand_id = #{brandId, jdbcType=BIGINT},
+	      </if>
+	      <if test="brandName != null and brandName != ''" >
+	        brand_name = #{brandName, jdbcType=VARCHAR},
+	      </if>
+	      <if test="specId != null" >
+	        spec_id = #{specId, jdbcType=BIGINT},
+	      </if>
+	      <if test="specName != null and specName != ''" >
+	        spec_name = #{specName, jdbcType=VARCHAR},
+	      </if>
+	      <if test="materialName != null and materialName != ''" >
+	        material_name = #{materialName, jdbcType=VARCHAR},
+	      </if>
+	      <if test="materialNickName != null and materialNickName != ''" >
+	        material_nick_name = #{materialNickName, jdbcType=VARCHAR},
+	      </if>
+	      <if test="unitId != null" >
+	        unit_id = #{unitId, jdbcType=BIGINT},
+	      </if>
+	      <if test="unitName != null and unitName != ''" >
+	        unit_name = #{unitName, jdbcType=VARCHAR},
+	      </if>
+	      <if test="supplierId != null" >
+	        supplier_id = #{supplierId, jdbcType=BIGINT},
+	      </if>
+	      <if test="supplierName != null and supplierName != ''" >
+	        supplier_name = #{supplierName, jdbcType=VARCHAR},
+	      </if>
+	      <if test="materialColor != null">`material_color` = #{materialColor}, </if>
+		  <if test="materialLength != null">`material_length` = #{materialLength}, </if>
+		  <if test="materialWeight != null">`material_weight` = #{materialWeight}, </if>
+		  <if test="materialWidth != null">`material_width` = #{materialWidth}, </if>
+		  <if test="materialHeight != null">`material_height` = #{materialHeight}, </if>
+		  <if test="materialPartsPackageInfo != null">`material_parts_package_info` = #{materialPartsPackageInfo}, </if>
+		  <if test="packingUnit != null and packingUnit != ''" >
+			packing_unit = #{packingUnit, jdbcType=VARCHAR},
+		  </if>
+		  <if test="packagingSpec != null">
+			packaging_spec = #{packagingSpec, jdbcType=DECIMAL},
+		  </if>
+	      <if test="updateTime != null" >
+	        update_time = #{updateTime, jdbcType=TIMESTAMP},
+	      </if>
+	      <if test="optUserId != null" >
+	        opt_user_id = #{optUserId, jdbcType=BIGINT},
+	      </if>
+	      <if test="optUserName != null and optUserName != ''" >
+	        opt_user_name = #{optUserName, jdbcType=VARCHAR},
+	      </if>
+			<if test="materialNickId != null" >
+				material_nick_id = #{materialNickId, jdbcType=BIGINT},
+			</if>
+			<if test="materialColorId != null" >
+				material_color_id = #{materialColorId, jdbcType=BIGINT},
+			</if>
+	    </set>
+	    WHERE id = #{id, jdbcType=BIGINT}
+  	</update>
+
+
+
+
+
+
+
+	<!-- 分页查询条件 -->
+	<sql id="selectProductWhereClause">
+		<if test="materialState != null">
+			AND mp.material_state = #{materialState, jdbcType=INTEGER}
+		</if>
+		<if test="materialState == null">
+			AND mp.material_state != -1
+		</if>
+		<if test="recordType !=null">
+		    AND mp.record_type = #{recordType, jdbcType=INTEGER}
+		</if>
+		<if test="productType != null">
+		    AND mp.product_type = #{productType, jdbcType=INTEGER}
+		</if>
+		<if test="materialType != null">
+			AND mp.material_type = #{materialType, jdbcType=INTEGER}
+		</if>
+		<if test="brandId != null">
+			AND mp.brand_id = #{brandId, jdbcType=BIGINT}
+		</if>
+		<if test="brandName != null and brandName != ''">
+			AND mp.brand_name = #{brandName, jdbcType=VARCHAR}
+		</if>
+		<if test="specId != null">
+			AND mp.spec_id = #{specId, jdbcType=BIGINT}
+		</if>
+		<if test="specName != null and specName != ''">
+			AND mp.spec_name = #{specName, jdbcType=VARCHAR}
+		</if>
+		<if test="materialName != null and materialName != ''">
+			AND INSTR( mp.material_name, #{materialName, jdbcType=VARCHAR}) >0
+		</if>
+		<if test="materialNickName != null and materialNickName != ''">
+			AND INSTR( mp.material_nick_name, #{materialNickName, jdbcType=VARCHAR}) >0
+		</if>
+		<if test="unitId != null">
+			AND mp.unit_id = #{unitId, jdbcType=BIGINT}
+		</if>
+		<if test="unitName != null and unitName != ''">
+			AND mp.unit_name = #{unitName, jdbcType=VARCHAR}
+		</if>
+		<if test="supplierId != null">
+			AND mp.supplier_id = #{supplierId, jdbcType=BIGINT}
+		</if>
+		<if test="supplierName != null and supplierName != ''">
+			AND mp.supplier_name = #{supplierName, jdbcType=VARCHAR}
+		</if>
+		<if test="startDate != null and startDate != ''">
+			<![CDATA[ and mp.update_time >= #{startDate} ]]>
+		</if>
+		<if test="endDate != null and endDate != ''">
+			<![CDATA[ and mp.update_time <= #{endDate} ]]>
+		</if>
+		<if test="keyWork != null and keyWork != ''">
+			and (
+			INSTR( mp.material_name, #{keyWork}) >0 OR
+			INSTR( mp.id, #{keyWork}) >0
+			<!-- INSTR( mp.material_nick_name, #{keyWork}) >0 OR
+			INSTR( mp.brand_name, #{keyWork}) >0 OR
+			INSTR( mp.spec_name, #{keyWork}) >0 OR
+			INSTR( mp.supplier_name, #{keyWork}) >0 OR
+			INSTR( mp.unit_name, #{keyWork}) >0 OR -->
+			)
+		</if>
+		<if test="materialNickId != null">
+			AND mp.material_nick_id = #{materialNickId, jdbcType=BIGINT}
+		</if>
+	</sql>
+
+	<!-- 搜索数据区域 -->
+	<sql id="selectSupplierAreaWhereClause">
+		<where>
+			1=1
+			<if test="supplierId != null"> and supplier_id = #{supplierId} </if>
+			<if test="provinceCode != null and provinceCode != ''"> and province_code = #{provinceCode} </if>
+			<if test="cityCode != null and cityCode != ''"> and city_code = #{cityCode} </if>
+		</where>
+	</sql>
+
+
+
+
+
+
+  	<select id="queryTotal" resultType="int">
+		SELECT COUNT(*) FROM sys_material_product mp
+		<if test="cityCode != null and cityCode != ''">
+			, sys_material_goods mg
+		</if>
+		<where>
+  			<include refid="selectWhereClause" />
+		</where>
+	</select>
+	
+	 <select id="findMaterialProduct" resultMap="BaseResultMap">
+	        SELECT * FROM sys_material_product  
+	        WHERE material_name = #{materialName}
+          		AND brand_name = #{brandName}
+            	AND spec_name = #{specName}
+            	AND material_state != 1
+	</select>
+
+    <insert id="insertMaterialProduct" parameterType="com.gh.pojo.entity.material.MaterialProduct" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_material_product
+		(
+			`material_state`, 
+			`material_type`, 
+			`brand_id`, 
+			`brand_name`, 
+			`spec_id`, 
+			`spec_name`, 
+			`material_name`, 
+			`material_nick_name`, 
+			`unit_id`, 
+			`unit_name`, 
+			`supplier_id`, 
+			`supplier_name`,
+			`material_color`, 
+			`material_length`, 
+			`material_weight`, 
+			`material_width`, 
+			`material_height`, 
+			`packing_unit`,
+			`packaging_spec`,
+			`create_time`, 
+			`update_time`,
+			`opt_user_id`, 
+			`opt_user_name`
+		)
+		values
+		(
+			0, 
+			#{materialType}, 
+			#{brandId}, 
+			#{brandName}, 
+			#{specId}, 
+			#{specName}, 
+			#{materialName}, 
+			#{materialNickName}, 
+			#{unitId}, 
+			#{unitName}, 
+			#{supplierId}, 
+			#{supplierName},
+			#{materialColor}, 
+			#{materialLength}, 
+			#{materialWeight}, 
+			#{materialWidth}, 
+			#{materialHeight}, 
+			#{packingUnit},
+			#{packagingSpec},
+			NOW(), 
+			NOW(), 
+			1, 
+			#{optUserName}
+		)
+    </insert>
+
+	<update id="updateProductState" useGeneratedKeys="true">
+		UPDATE sys_material_product set material_state = #{materialState},opt_user_id = #{optUserId},opt_user_name = #{optUserName},update_time = now()
+		WHERE id = #{id}
+	</update>
+
+	<update id="batchUpdateProductState">
+		UPDATE sys_material_product set material_state = #{materialState},opt_user_id = #{optUserId},opt_user_name = #{optUserName},update_time = now()
+		WHERE id in
+		<foreach item="id" collection="ids" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+
+	<update id="updateProductStateBySupplierId" useGeneratedKeys="true">
+		UPDATE sys_material_product set material_state = #{materialState},opt_user_id = #{optUserId},opt_user_name = #{optUserName},update_time = now()
+		WHERE id in( SELECT s.id from (SELECT id from sys_material_product where supplier_id = #{supplierId}) s)
+	</update>
+	
+	<!-- 根据供应商id级联更新 配件包 配件包价格 -->
+	<update id="updateMaterialState">
+		update sys_material_product mp, sys_material_goods mg  SET mp.material_state = #{state}, mp.opt_user_id = #{userId}, mp.opt_user_name = #{userName}, mp.update_time = NOW(),
+		mg.goods_state = #{state}, mg.opt_user_id = #{userId}, mg.opt_user_name = #{userName}, mg.update_time = NOW()  WHERE mp.id = mg.material_id and  mp.id in( SELECT a.parts_package_id from 
+		(SELECT distinct pk.parts_package_id FROM sys_supplier s, sys_material_product p, sys_material_parts_package pk WHERE s.id = p.supplier_id AND p.id = pk.parts_product_id AND s.id = #{supplierId}) a)
+	</update>
+	
+	<!-- 级联更新配件包 配件包价格 -->
+	<update id="updateMountingsState">
+		update sys_material_product mp, sys_material_goods mg  SET mp.material_state = #{materialState}, mp.opt_user_id = #{optUserId}, mp.opt_user_name = #{optUserName}, mp.update_time = NOW(),
+		   mg.goods_state = #{materialState}, mg.opt_user_id = #{optUserId}, mg.opt_user_name = #{optUserName}, mg.update_time =  NOW()  WHERE mp.id = mg.material_id and  mp.id in
+		(SELECT a.parts_package_id from (SELECT distinct pk.parts_package_id FROM sys_material_product p, sys_material_parts_package pk WHERE p.id = pk.parts_product_id and p.id = #{id}) a)
+	</update>
+
+	<!-- 精确查询查询辅材基本信息，主要是根据辅材名称及辅材昵称-->
+	<select id="exactQueryMaterialProduct" resultMap="BaseResultMap">
+		SELECT * FROM sys_material_product
+			WHERE material_name = #{materialName}
+				AND material_type = #{materialType, jdbcType=INTEGER}
+				AND brand_id = #{brandId, jdbcType=BIGINT}
+				AND spec_id = #{specId, jdbcType=BIGINT}
+				AND supplier_id = #{supplierId, jdbcType=BIGINT}
+				AND material_name = #{materialName, jdbcType=VARCHAR}
+				AND material_nick_name = #{materialNickName, jdbcType=VARCHAR}
+				<if test="productType != 1">
+				AND material_state != -1
+				</if>
+				AND product_type = #{productType, jdbcType=INTEGER}
+	</select>
+
+	<!--查询辅材基本信息，包含辅材的配送范围及所在供应商的状态-->
+	<select id="queryMaterialProductByGoodsIds" resultMap="BaseResultMap" parameterType="map">
+		SELECT distinct <include refid="Base_Column_List" />  FROM sys_material_product WHERE id in
+		( SELECT material_id from sys_material_goods where id in
+			<foreach item="id" collection="ids" open="(" separator="," close=")">
+				#{id}
+			</foreach>
+			<if test="goodsType != null">
+				AND goods_type = #{goodsType, jdbcType=INTEGER}
+			</if>
+		)
+	</select>
+
+
+	<!--查询辅材基本信息，包含辅材的配送范围及所在供应商的状态-->
+	<select id="queryMaterialProductByIdsAndCityCode" resultMap="BaseResultMap" parameterType="map">
+		SELECT distinct <include refid="As_Base_Column_List" />
+			FROM sys_material_product mp,sys_supplier_area a
+				WHERE mp.supplier_id = a.supplier_id
+					AND mp.material_state = #{materialState}
+					AND a.city_code = #{cityCode}
+					<if test="ids != null and ids.size()>0">
+						AND mp.id in
+						<foreach item="id" collection="ids" open="(" separator="," close=")">
+							#{id}
+						</foreach>
+					</if>
+	</select>
+
+	<!--根据辅材分类查询辅材基本信息-->
+	<select id="queryMaterialProductByMaterialNickNames" resultMap="BaseResultMap" parameterType="map">
+		SELECT <include refid="As_Base_Column_List"/>
+			FROM sys_material_product mp,sys_supplier_area a
+			WHERE mp.supplier_id = a.supplier_id
+				AND mp.material_state = #{materialState}
+				AND ${materialNickNames}
+				AND a.city_code = #{cityCode}
+	</select>
+
+	<!--查询辅材基本信息，包含辅材的配送范围及所在供应商的状态-->
+	<select id="queryMaterialProduct" resultMap="BaseResultMap" parameterType="map">
+		SELECT mp.*,a.supplierAreaStr,a.supplier_state FROM sys_material_product mp,
+		(
+			SELECT c.supplier_id,c.supplierAreaStr,s.supplier_state FROM (
+				SELECT
+					c.supplier_id,
+					<![CDATA[ GROUP_CONCAT(city_name SEPARATOR '<br/>') as supplierAreaStr ]]>
+				FROM
+				(
+					SELECT
+						supplier_id,
+						CONCAT(province_name,'(',GROUP_CONCAT(city_name SEPARATOR ','),')') AS city_name,
+						CONCAT(province_code,'(',GROUP_CONCAT(city_code SEPARATOR ','),')') AS city_code,
+						province_code,province_name
+					FROM sys_supplier_area
+						<include refid="selectSupplierAreaWhereClause" />
+						GROUP BY
+							supplier_id,province_code
+						ORDER BY province_code DESC
+				) c GROUP BY supplier_id
+			) c, sys_supplier s
+			where c.supplier_id = s.id
+		) a
+		WHERE mp.supplier_id = a.supplier_id
+		<include refid="selectProductWhereClause" />
+	</select>
+	
+	<select id="getCountByObj" resultType="java.util.HashMap">
+	    SELECT count(DISTINCT mp.id) as count, COUNT(mp.material_state = 0 or null) as key0, COUNT(mp.material_state = 1 or null) as key1 FROM sys_material_product mp,
+		(
+			SELECT c.supplier_id,c.supplierAreaStr,s.supplier_state FROM (
+				SELECT
+					c.supplier_id,
+					<![CDATA[ GROUP_CONCAT(city_name SEPARATOR '<br/>') as supplierAreaStr ]]>
+				FROM
+				(
+					SELECT
+						supplier_id,
+						CONCAT(province_name,'(',GROUP_CONCAT(city_name SEPARATOR ','),')') AS city_name,
+						CONCAT(province_code,'(',GROUP_CONCAT(city_code SEPARATOR ','),')') AS city_code,
+						province_code,province_name
+					FROM sys_supplier_area
+						<include refid="selectSupplierAreaWhereClause" />
+						GROUP BY
+							supplier_id,province_code
+						ORDER BY province_code DESC
+				) c GROUP BY supplier_id
+			) c, sys_supplier s
+			where c.supplier_id = s.id
+		) a
+		WHERE mp.supplier_id = a.supplier_id
+		<include refid="selectProductWhereClause" />
+	</select>
+
+	<select id="queryMaterialProductTotal" resultType="int">
+		SELECT COUNT(*) FROM sys_material_product mp,
+		(
+			SELECT c.supplier_id,c.supplierAreaStr,s.supplier_state FROM (
+				SELECT
+					c.supplier_id,
+					<![CDATA[ GROUP_CONCAT(city_name SEPARATOR '<br/>') as supplierAreaStr ]]>
+				FROM
+				(
+					SELECT
+						supplier_id,
+						CONCAT(province_name,'(',GROUP_CONCAT(city_name SEPARATOR ','),')') AS city_name,
+						CONCAT(province_code,'(',GROUP_CONCAT(city_code SEPARATOR ','),')') AS city_code,
+						province_code,province_name
+					FROM sys_supplier_area
+						<include refid="selectSupplierAreaWhereClause" />
+						GROUP BY
+							supplier_id,province_code
+						ORDER BY province_code DESC
+				) c GROUP BY supplier_id
+			) c, sys_supplier s
+			where c.supplier_id = s.id
+		) a
+		WHERE mp.supplier_id = a.supplier_id
+		<include refid="selectProductWhereClause" />
+	</select>
+	
+	
+	<resultMap type="com.gh.pojo.vo.material.AccessoryVo" id="getAccessory" extends="BaseResultMap">
+        <result property="goodsId" column="goods_id"/>
+        <result property="provinceCode" column="province_code"/>
+        <result property="provinceName" column="province_name"/>
+        <result property="cityCode" column="city_code"/>
+        <result property="cityName" column="city_name"/>
+        <result property="workPosition" column="work_position"/>
+        <result property="unitCostPrice" column="unit_cost_price"/>
+        <result property="unitSalesPrice" column="unit_sales_price"/>
+
+		<result property="id" column="id"/>
+		<result property="cutFlag" column="cut_flag"/>
+		<result property="cutMethod" column="cut_method"/>
+    </resultMap>
+	<select id="getAccessory" resultMap="getAccessory"  parameterType="java.util.Map" >
+		select
+			IF(IFNULL(c.cut_method,0) = 0,'false','true') as cut_flag,
+			replace(replace(replace(IFNULL(c.cut_method,''),1,'横裁'),2,'竖裁'),3,'无需裁切') as cut_method,
+			p.*,g.id as goods_id,g.province_code as province_code,g.province_name as province_name,
+			g.city_code as city_code,g.city_name as city_name,g.work_position as work_position,g.unit_cost_price as unit_cost_price,
+			g.unit_sales_price as unit_sales_price 	
+		from sys_material_product p left JOIN sys_material_goods g on p.id=g.material_id
+			LEFT JOIN sys_material_category c ON p.material_nick_id = c.id
+		where g.goods_type=3 and g.city_code=#{cityCode}  and p.product_type = 3
+		<choose>
+            <when test="materialType!=null">
+                and p.material_type=#{materialType, jdbcType=INTEGER}
+            </when>
+            <otherwise>
+                  and p.material_type=1 
+            </otherwise>
+        </choose>
+		
+		<if test="paramList !=null">
+			and (
+				${paramList}
+			)
+			<!-- foreach collection="paramList" item="item" open="(" close=")" separator=",">
+            (#{item.deviceName},#{item.logicId})
+			</foreach-->
+			
+		</if>
+		<!--<if test="numbers != null and limit != null">-->
+			<!--LIMIT #{numbers}, #{limit}-->
+		<!--</if>-->
+	</select>
+
+	<select id="queryCutMethodByMaterialIds" resultMap="getAccessory"  parameterType="java.util.Map" >
+		SELECT DISTINCT p.id,
+			IF(IFNULL(c.cut_method,0) = 0,'false','true') as cut_flag,
+			replace(replace(replace(IFNULL(c.cut_method,''),1,'横裁'),2,'竖裁'),3,'无需裁切') as cut_method
+		FROM sys_material_category c,sys_material_product p
+		where c.id = p.material_nick_id
+			<if test="materialIds != null and materialIds.size()>0">
+				AND p.id in
+				<foreach item="id" collection="materialIds" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</if>
+			and material_nick_id is not null
+	</select>
+
+
+	<select id="getAccessorySearch" resultMap="getAccessory"  parameterType="java.util.Map" >
+		select
+		IF(IFNULL(c.cut_method,0) = 0,'false','true') as cut_flag,
+		replace(replace(replace(IFNULL(c.cut_method,''),1,'横裁'),2,'竖裁'),3,'无需裁切') as cut_method,
+		p.*,g.id as goods_id,g.province_code as province_code,g.province_name as province_name,
+		g.city_code as city_code,g.city_name as city_name,g.work_position as work_position,g.unit_cost_price as unit_cost_price,
+		g.unit_sales_price as unit_sales_price
+		from sys_material_product p left JOIN sys_material_goods g on p.id=g.material_id
+			LEFT JOIN sys_material_category c ON p.material_nick_id = c.id
+		where g.goods_type=3 and g.city_code=#{cityCode}  and p.product_type = 3
+		<if test="paramList !=null">
+			and (
+			${paramList}
+			)
+		</if>
+		<if test="queryParam !=null">
+			and
+			(p.material_name like concat('%',#{queryParam},'%')
+			or p.brand_name like concat('%',#{queryParam},'%')
+			or p.spec_name like concat('%',#{queryParam},'%'))
+		</if>
+		<if test="numbers != null and limit != null">
+			LIMIT #{numbers}, #{limit}
+		</if>
+	</select>
+	
+	<update id="updateSupplierName">
+	    UPDATE sys_material_product set supplier_name = #{supplierName} WHERE supplier_id = #{supplierId}
+	</update>
+
+</mapper>
